@@ -23,6 +23,7 @@ public class Configuration : IPluginConfiguration
     public bool UserResize = false;
     public bool ShowAll = true;
     public bool ShowResourcesInAll = true;
+    public bool SwapResourcesInAll = true;
     public bool ShowRouteInAll = false;
     public bool ShowDateInAll = false;
 

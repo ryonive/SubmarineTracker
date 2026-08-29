@@ -30,6 +30,11 @@ public partial class ConfigWindow
 
             using var indent = ImRaii.PushIndent(10.0f);
             changed |= ImGui.Checkbox(Language.ConfigTabCheckboxShowResources, ref Plugin.Configuration.ShowResourcesInAll);
+            if (Plugin.Configuration.ShowResourcesInAll)
+            {
+                using var innerIndent = ImRaii.PushIndent(10.0f);
+                changed |= ImGui.Checkbox(Language.ConfigTabCheckboxSwapResources, ref Plugin.Configuration.SwapResourcesInAll);
+            }
             changed |= ImGui.Checkbox(Language.ConfigTabCheckboxShowRoute, ref Plugin.Configuration.ShowRouteInAll);
             ImGuiComponents.HelpMarker(Language.ConfigTabTooltipShowRoute);
             changed |= ImGui.Checkbox(Language.ConfigTabCheckboxShowDate, ref Plugin.Configuration.ShowDateInAll);

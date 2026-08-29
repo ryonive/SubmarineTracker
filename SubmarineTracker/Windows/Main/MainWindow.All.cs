@@ -74,16 +74,56 @@ public partial class MainWindow
         ImGui.TableNextColumn();
         Helper.TextColored(ImGuiColors.DalamudViolet, $"{Plugin.NameConverter.GetName(fc)}:");
 
+        var subs = Plugin.DatabaseCache.GetSubmarines(fc.FreeCompanyId);
+
         if (Plugin.Configuration.ShowResourcesInAll)
         {
             using var indent = ImRaii.PushIndent(10.0f);
 
             var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, fc.FreeCompanyId, out var tankCount);
             var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, fc.FreeCompanyId, out var kitCount);
-            Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsTanks} {(hasTanks ? $"x{tankCount}" : Language.WarningNoStorageCount)} & {Language.TermsKits} {(hasKits ? $"x{kitCount}" : Language.WarningNoStorageCount)}");
+
+            var leftover = Storage.CheckLeftoversFromStorage(subs, tankCount, kitCount);
+            if (leftover.Voyages == -1 || leftover.Repairs == -1)
+            {
+                Helper.TextColored(ImGuiColors.ErrorForeground, Language.ErrorLeftoverCalculationFail);
+            }
+            else
+            {
+                Vector4 color;
+                string leftoverText;
+                var storageText = $"{Language.TermsTanks} {(hasTanks ? $"x{tankCount:N0}" : Language.WarningNoStorageCount)} & {Language.TermsKits} {(hasKits ? $"x{kitCount:N0}" : Language.WarningNoStorageCount)}";
+
+                if (leftover is { Voyages: 0, Repairs: 0 })
+                {
+                    leftoverText = Language.StorageBoth;
+                    color = ImGuiColors.ErrorForeground;
+                }
+                else if (leftover.Voyages == 0)
+                {
+                    leftoverText = Language.StorageNoTanks;
+                    color = ImGuiColors.AttentionForeground;
+                }
+                else if (leftover.Repairs == 0)
+                {
+                    leftoverText = Language.StorageNoKits;
+                    color = ImGuiColors.AttentionForeground;
+                }
+                else
+                {
+                    leftoverText = Language.StorageAllOkayShort.Format(leftover.Voyages, leftover.Repairs);
+                    color = ImGuiColors.SuccessForeground;
+                }
+
+
+                if (!Plugin.Configuration.SwapResourcesInAll)
+                    ColoredTextWithHover(storageText, leftoverText, color);
+                else
+                    ColoredTextWithHover(leftoverText, storageText, color);
+            }
         }
 
-        foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(fc.FreeCompanyId).WithIndex())
+        foreach (var (sub, idx) in subs.WithIndex())
         {
             using var indent = ImRaii.PushIndent(10.0f);
             var begin = ImGui.GetCursorScreenPos();
@@ -128,6 +168,16 @@ public partial class MainWindow
 
                 Helper.Tooltip(tooltip);
             }
+        }
+    }
+
+    private void ColoredTextWithHover(string text, string hover, Vector4 color)
+    {
+        Helper.TextColored(color, text);
+        if (ImGui.IsItemHovered())
+        {
+            using var tooltip = ImRaii.Tooltip();
+            Helper.TextColored(color, hover);
         }
     }
 }

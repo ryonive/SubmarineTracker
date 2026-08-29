@@ -1385,6 +1385,15 @@ namespace SubmarineTracker.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Swap Resources With Leftover.
+        /// </summary>
+        internal static string ConfigTabCheckboxSwapResources {
+            get {
+                return ResourceManager.GetString("ConfigTabCheckboxSwapResources", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show Both Options.
         /// </summary>
         internal static string ConfigTabCheckboxTimeDateShowBoth {
@@ -2384,6 +2393,15 @@ namespace SubmarineTracker.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Leftover Calculation Failed!.
+        /// </summary>
+        internal static string ErrorLeftoverCalculationFail {
+            get {
+                return ResourceManager.GetString("ErrorLeftoverCalculationFail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No data found for this character&apos;s FC
         ///Please visit your Company Workshop and access Submersible Management at the Voyage Control Panel..
         /// </summary>
@@ -3352,6 +3370,15 @@ namespace SubmarineTracker.Resources {
         internal static string StorageAllOkay {
             get {
                 return ResourceManager.GetString("StorageAllOkay", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0:N0} voyages and {1:N0} repairs.
+        /// </summary>
+        internal static string StorageAllOkayShort {
+            get {
+                return ResourceManager.GetString("StorageAllOkayShort", resourceCulture);
             }
         }
         

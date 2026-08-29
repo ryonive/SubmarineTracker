@@ -82,4 +82,20 @@ public static class Storage
 
         return (tanks / requiredTanks, kits / requiredKits);
     }
+
+    public static (long Voyages, long Repairs) CheckLeftoversFromStorage(IEnumerable<Submarine> subs, uint tanks, uint kits)
+    {
+        var requiredKits = 0;
+        var requiredTanks = 0;
+        foreach (var sub in subs)
+        {
+            requiredKits += sub.Build.RepairCosts;
+            requiredTanks += Voyage.ToExplorationArray(sub.Points).Sum(p => p.CeruleumTankReq);
+        }
+
+        if (requiredTanks == 0 || requiredKits == 0)
+            return (-1, -1);
+
+        return (tanks / requiredTanks, kits / requiredKits);
+    }
 }

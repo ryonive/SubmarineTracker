@@ -27,7 +27,7 @@ public partial class MainWindow
 
                 Helper.TextColored(ImGuiColors.HealerGreen, Language.MainWindowEntryResources);
                 ImGui.SameLine();
-                Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsTanks} {(hasTanks ? $"x{tankCount}" : Language.WarningNoStorageCount)} & {Language.TermsKits} {(hasKits ? $"x{kitCount}" : Language.WarningNoStorageCount)}");
+                Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsTanks} {(hasTanks ? $"x{tankCount:N0}" : Language.WarningNoStorageCount)} & {Language.TermsKits} {(hasKits ? $"x{kitCount:N0}" : Language.WarningNoStorageCount)}");
 
                 ImGuiHelpers.ScaledDummy(5.0f);
 

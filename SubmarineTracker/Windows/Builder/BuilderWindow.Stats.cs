@@ -102,7 +102,7 @@ public partial class BuilderWindow
                 Helper.TextColored(ImGuiColors.HealerGreen, Language.TermsFuel);
 
                 ImGui.TableNextColumn();
-                ImGui.TextUnformatted($"{CurrentBuild.FuelCost}{(tanks > 0 ? $" / {tanks}" : "")}");
+                ImGui.TextUnformatted($"{CurrentBuild.FuelCost}{(tanks > 0 ? $" / {tanks:N0}" : "")}");
 
                 ImGui.TableNextRow();
 
