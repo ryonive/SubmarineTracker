@@ -1,4 +1,5 @@
 ﻿using Dalamud.Utility;
+using SubmarineTracker.Data;
 using SubmarineTracker.Resources;
 
 namespace SubmarineTracker.Windows.Main;
@@ -43,7 +44,7 @@ public partial class MainWindow
 
             foreach (var id in fcLists)
             {
-                ShowFCInfo(allFCs[id], id, indentWidth, secondRowWidth, thirdRowWidth);
+                ShowFCInfo(allFCs[id], indentWidth, secondRowWidth, thirdRowWidth);
 
                 ImGuiHelpers.ScaledDummy(5.0f);
             }
@@ -62,18 +63,27 @@ public partial class MainWindow
 
         foreach (var (id, _) in Plugin.GetManagedFCs(false))
         {
-            ShowFCInfo(allFCs[id], id, indentWidth, secondRowWidth, thirdRowWidth);
+            ShowFCInfo(allFCs[id], indentWidth, secondRowWidth, thirdRowWidth);
 
             ImGuiHelpers.ScaledDummy(5.0f);
         }
     }
 
-    private void ShowFCInfo(FreeCompany fc, ulong id, float indentWidth, float secondRowWidth, float thirdRowWidth)
+    private void ShowFCInfo(FreeCompany fc, float indentWidth, float secondRowWidth, float thirdRowWidth)
     {
         ImGui.TableNextColumn();
         Helper.TextColored(ImGuiColors.DalamudViolet, $"{Plugin.NameConverter.GetName(fc)}:");
 
-        foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(id).WithIndex())
+        if (Plugin.Configuration.ShowResourcesInAll)
+        {
+            using var indent = ImRaii.PushIndent(10.0f);
+
+            var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, fc.FreeCompanyId, out var tankCount);
+            var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, fc.FreeCompanyId, out var kitCount);
+            Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsTanks} {(hasTanks ? $"x{tankCount}" : Language.WarningNoStorageCount)} & {Language.TermsKits} {(hasKits ? $"x{kitCount}" : Language.WarningNoStorageCount)}");
+        }
+
+        foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(fc.FreeCompanyId).WithIndex())
         {
             using var indent = ImRaii.PushIndent(10.0f);
             var begin = ImGui.GetCursorScreenPos();

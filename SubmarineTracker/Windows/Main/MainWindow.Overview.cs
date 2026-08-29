@@ -20,32 +20,19 @@ public partial class MainWindow
                 var thirdRow = ImGui.GetContentRegionMax().X / 4.2f;
                 var lastRow = ImGui.GetContentRegionMax().X / 3;
 
-                if (Plugin.AllaganToolsConsumer.IsAvailable)
-                {
-                    ImGuiHelpers.ScaledDummy(5.0f);
+                ImGuiHelpers.ScaledDummy(5.0f);
 
-                    // build cache if needed
-                    Storage.BuildStorageCache();
+                var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, CurrentSelection, out var tankCount);
+                var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, CurrentSelection, out var kitCount);
 
-                    if (Storage.StorageCache.TryGetValue(CurrentSelection, out var cachedItems))
-                    {
-                        uint tanks = 0, kits = 0;
-                        if (cachedItems.TryGetValue((uint)Items.Tanks, out var temp))
-                            tanks = temp.Count;
-                        if (cachedItems.TryGetValue((uint)Items.Kits, out temp))
-                            kits = temp.Count;
+                Helper.TextColored(ImGuiColors.HealerGreen, Language.MainWindowEntryResources);
+                ImGui.SameLine();
+                Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsTanks} {(hasTanks ? $"x{tankCount}" : Language.WarningNoStorageCount)} & {Language.TermsKits} {(hasKits ? $"x{kitCount}" : Language.WarningNoStorageCount)}");
 
-                        Helper.TextColored(ImGuiColors.HealerGreen, Language.MainWindowEntryResources);
-                        ImGui.SameLine();
-                        Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsTanks} x{tanks} & {Language.TermsKits} x{kits}");
-                    }
-                }
+                ImGuiHelpers.ScaledDummy(5.0f);
 
                 foreach (var sub in Plugin.DatabaseCache.GetSubmarines(selectedFc.FreeCompanyId))
                 {
-                    using var indent = ImRaii.PushIndent(10.0f);
-
-                    ImGuiHelpers.ScaledDummy(10.0f);
                     Helper.TextColored(ImGuiColors.HealerGreen, Plugin.NameConverter.GetJustSub(sub));
                     Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsRank} {sub.Rank}");
                     ImGui.SameLine(secondRow);

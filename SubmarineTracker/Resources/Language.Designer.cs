@@ -1340,6 +1340,15 @@ namespace SubmarineTracker.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show Resources.
+        /// </summary>
+        internal static string ConfigTabCheckboxShowResources {
+            get {
+                return ResourceManager.GetString("ConfigTabCheckboxShowResources", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Show Route.
         /// </summary>
         internal static string ConfigTabCheckboxShowRoute {
@@ -2408,6 +2417,15 @@ namespace SubmarineTracker.Resources {
         internal static string FavorTermYes {
             get {
                 return ResourceManager.GetString("FavorTermYes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No data available..
+        /// </summary>
+        internal static string HelpyStorageTabWarning {
+            get {
+                return ResourceManager.GetString("HelpyStorageTabWarning", resourceCulture);
             }
         }
         
@@ -4225,6 +4243,15 @@ namespace SubmarineTracker.Resources {
         internal static string WarningInvalidDate {
             get {
                 return ResourceManager.GetString("WarningInvalidDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No Data.
+        /// </summary>
+        internal static string WarningNoStorageCount {
+            get {
+                return ResourceManager.GetString("WarningNoStorageCount", resourceCulture);
             }
         }
         

@@ -85,6 +85,10 @@ public class Database : IDisposable
             case <= 0:
                 migrationsToDo.Add(Migrate0);
                 migrationsToDo.Add(Migrate1);
+                migrationsToDo.Add(Migrate2);
+                break;
+            case 1:
+                migrationsToDo.Add(Migrate2);
                 break;
         }
 
@@ -208,6 +212,18 @@ public class Database : IDisposable
                            """);
 
         SetMigrationVersion(1);
+    }
+
+    private void Migrate2()
+    {
+        Connection.Execute("""
+                   CREATE TABLE IF NOT EXISTS storage (
+                       FreeCompanyId BLOB PRIMARY KEY NOT NULL,            -- MessagePack encoded uint64
+                       Items BLOB NOT NULL                                 -- Dictionary<uint, uint>
+                   );
+                   """);
+
+        SetMigrationVersion(2);
     }
 
     private void SetMigrationVersion(int version)
@@ -366,8 +382,7 @@ public class Database : IDisposable
                               HullDurability = excluded.HullDurability,
                               SternDurability = excluded.SternDurability,
                               BowDurability = excluded.BowDurability,
-                              BridgeDurability = excluded.BridgeDurability
-                          ;
+                              BridgeDurability = excluded.BridgeDurability;
                           """;
 
         cmd.Parameters.AddWithValue("$FreeCompanyId", MessagePackSerializer.Serialize(sub.FreeCompanyId));
@@ -415,8 +430,7 @@ public class Database : IDisposable
                               World = excluded.World,
                               CharacterName = excluded.CharacterName,
                               UnlockedSectors = excluded.UnlockedSectors,
-                              ExploredSectors = excluded.ExploredSectors
-                          ;
+                              ExploredSectors = excluded.ExploredSectors;
                           """;
 
         cmd.Parameters.AddWithValue("$FreeCompanyId", MessagePackSerializer.Serialize(fc.FreeCompanyId));
@@ -425,6 +439,28 @@ public class Database : IDisposable
         cmd.Parameters.AddWithValue("$CharacterName", fc.CharacterName);
         cmd.Parameters.AddWithValue("$UnlockedSectors", MessagePackSerializer.Serialize(fc.UnlockedSectors));
         cmd.Parameters.AddWithValue("$ExploredSectors", MessagePackSerializer.Serialize(fc.ExploredSectors));
+
+        cmd.ExecuteNonQuery();
+    }
+
+    internal void UpsertStorage(StorageData data)
+    {
+        var cmd = Connection.CreateCommand();
+        cmd.CommandText = """
+                          INSERT INTO storage (
+                              FreeCompanyId,
+                              Items
+                          ) VALUES (
+                              $FreeCompanyId,
+                              $Items
+                          )
+                          ON CONFLICT (FreeCompanyId) DO UPDATE SET
+                              FreeCompanyId = excluded.FreeCompanyId,
+                              Items = excluded.Items;
+                          """;
+
+        cmd.Parameters.AddWithValue("$FreeCompanyId", MessagePackSerializer.Serialize(data.FreeCompanyId));
+        cmd.Parameters.AddWithValue("$Items", MessagePackSerializer.Serialize(data.Items));
 
         cmd.ExecuteNonQuery();
     }
@@ -457,6 +493,16 @@ public class Database : IDisposable
         cmd.CommandTimeout = 120;
 
         return new FCReader(cmd.ExecuteReader());
+    }
+
+    internal StorageReader GetStorage()
+    {
+        var cmd = Connection.CreateCommand();
+
+        cmd.CommandText = "SELECT * FROM storage";
+        cmd.CommandTimeout = 120;
+
+        return new StorageReader(cmd.ExecuteReader());
     }
 
     internal long GetCounter(string counter)
@@ -622,6 +668,37 @@ internal class FCReader(DbDataReader reader) : IEnumerable<FreeCompany>
             }
 
             yield return fc;
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+}
+
+internal class StorageReader(DbDataReader reader) : IEnumerable<StorageData>
+{
+    public IEnumerator<StorageData> GetEnumerator()
+    {
+        while (reader.Read())
+        {
+            StorageData data;
+            try
+            {
+                data = new StorageData
+                {
+                    FreeCompanyId = MessagePackSerializer.Deserialize<ulong>(reader.GetFieldValue<byte[]>(0)),
+                    Items = MessagePackSerializer.Deserialize<Dictionary<uint, uint>>(reader.GetFieldValue<byte[]>(1)),
+                };
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "Unable to read storage entry from database");
+                continue;
+            }
+
+            yield return data;
         }
     }
 

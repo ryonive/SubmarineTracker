@@ -22,6 +22,7 @@ public class Configuration : IPluginConfiguration
     public bool ShowPrediction = true;
     public bool UserResize = false;
     public bool ShowAll = true;
+    public bool ShowResourcesInAll = true;
     public bool ShowRouteInAll = false;
     public bool ShowDateInAll = false;
 

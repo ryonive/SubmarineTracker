@@ -31,15 +31,7 @@ public partial class BuilderWindow
             repairAfter = CurrentBuild.CalculateUntilRepair();
         }
 
-        var tanks = 0u;
-        if (Plugin.AllaganToolsConsumer.IsAvailable)
-        {
-            // build cache if needed
-            Storage.BuildStorageCache();
-            if (Storage.StorageCache.TryGetValue(Plugin.PlayerState.ContentId, out var cachedItems) && cachedItems.TryGetValue((uint)Items.Tanks, out var temp))
-                tanks = temp.Count;
-        }
-
+        Storage.TryGetStorageCount((uint)Items.Tanks, Plugin.GetFCId, out var tanks);
         using (var table = ImRaii.Table("##buildColumn", 2, ImGuiTableFlags.SizingFixedFit))
         {
             if (table.Success)

@@ -128,10 +128,11 @@ public class Plugin : IDalamudPlugin
 
         Framework.Update += FrameworkUpdate;
         Framework.Update += Notify.NotifyLoop;
-        ClientState.Login += StartupStorageMessage;
+        ClientState.Login += StartupMessageAndStorageCheck;
+        ClientState.TerritoryChanged += StorageCheck;
 
         if (ClientState.IsLoggedIn)
-            StartupStorageMessage();
+            StartupMessageAndStorageCheck();
 
         // Try to init it last, just to make sure that loc actually loaded fine
         Helper.Initialize(this);
@@ -141,7 +142,7 @@ public class Plugin : IDalamudPlugin
             ReturnOverlay.IsOpen = true;
 
         // Trigger Importer to precalculate hashes
-        Log.Debug($"Loading: {Importer.Filename}");
+        Log.Verbose($"Loading: {Importer.Filename}");
     }
 
     public void Dispose()
@@ -168,7 +169,8 @@ public class Plugin : IDalamudPlugin
         HookManager.Dispose();
         ServerBar.Dispose();
 
-        ClientState.Login -= StartupStorageMessage;
+        ClientState.TerritoryChanged -= StorageCheck;
+        ClientState.Login -= StartupMessageAndStorageCheck;
         Framework.Update -= FrameworkUpdate;
         Framework.Update -= Notify.NotifyLoop;
     }
@@ -364,20 +366,60 @@ public class Plugin : IDalamudPlugin
 
     public void Sync()
     {
-        Storage.Refresh = true;
         LoadFCOrder();
     }
 
-    private void StartupStorageMessage()
+    private void StartupMessageAndStorageCheck()
     {
         if (Configuration is { ShowStorageAtStartup: true, ShowStorageMessage: true })
         {
             Framework.RunOnTick(() =>
             {
-                var fcId = GetFCId;
-                if (DatabaseCache.GetFreeCompanies().ContainsKey(fcId))
-                    SendStorageMessage(fcId);
+                try
+                {
+                    var fcId = GetFCId;
+                    if (DatabaseCache.HasFC(fcId))
+                    {
+                        var storage = new StorageData
+                        {
+                            FreeCompanyId = fcId,
+                            Items = Storage.GenerateStorageData(),
+                        };
+
+                        DatabaseCache.Database.UpsertStorage(storage);
+                        DatabaseCache.StorageNeedRefresh = true;
+
+                        SendStorageMessage(fcId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Storage check and message on login failed.");
+                }
             }, TimeSpan.FromSeconds(1));
+        }
+    }
+
+    private void StorageCheck(uint obj)
+    {
+        try
+        {
+            var fcId = GetFCId;
+            if (DatabaseCache.HasFC(fcId))
+            {
+                var storage = new StorageData
+                {
+                    FreeCompanyId = fcId,
+                    Items = Storage.GenerateStorageData(),
+                };
+
+                DatabaseCache.Database.UpsertStorage(storage);
+                DatabaseCache.StorageNeedRefresh = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Storage check on territory change failed.");
         }
     }
 
@@ -419,7 +461,8 @@ public class Plugin : IDalamudPlugin
     public void OpenConfig() => ConfigWindow.Toggle();
     #endregion
 
-    public static unsafe ulong GetFCId => InfoProxyFreeCompany.Instance()->Id;
+    public static unsafe ulong GetFCId
+        => InfoProxyFreeCompany.Instance()->Id;
 
     public static IEnumerable<ulong> GetFCOrderWithoutHidden()
     {
