@@ -97,6 +97,7 @@ public class Configuration : IPluginConfiguration
     public Dictionary<string, Build.RouteBuild> SavedBuilds = new();
 
     public List<(ulong Id, bool Hidden)> ManagedFCs = [];
+    public Dictionary<string, List<ulong>> AccountFCs = [];
 
     [JsonIgnore]
     public static readonly JsonSerializerSettings SerializerSettings = new()

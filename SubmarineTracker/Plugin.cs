@@ -455,6 +455,18 @@ public class Plugin : IDalamudPlugin
             }
         }
 
+        foreach (var (key, fcList) in Configuration.AccountFCs)
+        {
+            foreach (var fc in fcList.ToArray())
+            {
+                if (!knownFCs.ContainsKey(fc))
+                {
+                    notSafe = true;
+                    Configuration.AccountFCs[key].Remove(fc);
+                }
+            }
+        }
+
         if (notSafe)
             Configuration.Save();
     }
@@ -486,5 +498,15 @@ public class Plugin : IDalamudPlugin
     public static (ulong Id, bool Hidden) GetManagedFCOrDefault(int index)
     {
         return Configuration.ManagedFCs.ElementAtOrDefault(index);
+    }
+
+    public (ulong Id, bool Hidden)[] GetManagedFCs(bool getHidden)
+    {
+        var accountFCs = Configuration.AccountFCs.Values.SelectMany(id => id).ToHashSet();
+        var notAssignedFCs = Configuration.ManagedFCs.Where(status => !accountFCs.Contains(status.Id));
+
+        return getHidden
+            ? notAssignedFCs.Where(status => status.Hidden).ToArray()
+            : notAssignedFCs.Where(status => !status.Hidden).ToArray();
     }
 }

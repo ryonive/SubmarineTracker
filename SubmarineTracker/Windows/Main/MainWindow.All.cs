@@ -31,65 +31,93 @@ public partial class MainWindow
         // Ensure that atleast 1 column is requested
         numberOfRows = Math.Max(1, numberOfRows);
 
-        using var allTable = ImRaii.Table("##allTable", numberOfRows);
-        if (!allTable.Success)
+        var allFCs = Plugin.DatabaseCache.GetFreeCompanies();
+        foreach (var (name, fcLists) in Plugin.Configuration.AccountFCs)
+        {
+            if (!ImGui.CollapsingHeader($"{name}", ImGuiTreeNodeFlags.DefaultOpen))
+                continue;
+
+            using var allTable = ImRaii.Table($"##allTable{name}", numberOfRows);
+            if (!allTable.Success)
+                return;
+
+            foreach (var id in fcLists)
+            {
+                ShowFCInfo(allFCs[id], id, indentWidth, secondRowWidth, thirdRowWidth);
+
+                ImGuiHelpers.ScaledDummy(5.0f);
+            }
+        }
+
+        var unassignedFCs = Plugin.GetManagedFCs(false);
+        if (unassignedFCs.Length == 0)
             return;
 
-        foreach (var id in Plugin.GetFCOrderWithoutHidden())
+        if (!ImGui.CollapsingHeader($"Not Assigned", ImGuiTreeNodeFlags.DefaultOpen))
+            return;
+
+        using var notAssignedTable = ImRaii.Table($"##allTableNotAssigned", numberOfRows);
+        if (!notAssignedTable.Success)
+            return;
+
+        foreach (var (id, _) in Plugin.GetManagedFCs(false))
         {
-            var fc = Plugin.DatabaseCache.GetFreeCompanies()[id];
-
-            ImGui.TableNextColumn();
-            Helper.TextColored(ImGuiColors.DalamudViolet, $"{Plugin.NameConverter.GetName(fc)}:");
-
-            foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(id).WithIndex())
-            {
-                using var indent = ImRaii.PushIndent(10.0f);
-                var begin = ImGui.GetCursorScreenPos();
-
-                Helper.TextColored(ImGuiColors.HealerGreen, $"{idx + 1}. ");
-                ImGui.SameLine();
-
-                var condition = sub.PredictDurability() > 0;
-                var color = condition ? ImGuiColors.TankBlue : ImGuiColors.DalamudYellow;
-                Helper.TextColored(color, $"{Language.TermsRank} {sub.Rank}");
-                ImGui.SameLine(indentWidth + secondRowWidth);
-                Helper.TextColored(color, $"({sub.Build.FullIdentifier()})");
-
-                ImGui.SameLine(indentWidth + secondRowWidth + thirdRowWidth);
-
-                var route = "";
-                var time = $" {Language.TermsNoVoyage} ";
-                if (sub.IsOnVoyage())
-                {
-                    route = Utils.SectorsToPath(" -> ", sub.Points);
-
-                    time = $" {Language.TermsDone} ";
-                    var returnTime = sub.ReturnTime - DateTime.Now.ToUniversalTime();
-                    if (returnTime.TotalSeconds > 0)
-                        time = !Plugin.Configuration.ShowDateInAll ? $" {Utils.ToTime(returnTime)} " : $" {sub.ReturnTime.ToLocalTime()}";
-                }
-
-                var fullText = $"[ {time}{(Plugin.Configuration.ShowRouteInAll ? $"   {route}" : "")} ]";
-                Helper.TextColored(ImGuiColors.ParsedOrange, fullText);
-
-                var textSize = ImGui.CalcTextSize(fullText);
-                var end = new Vector2(begin.X + textSize.X + indentWidth + secondRowWidth + thirdRowWidth, begin.Y + textSize.Y + ImGui.GetStyle().ItemSpacing.Y);
-                if (ImGui.IsMouseHoveringRect(begin, end))
-                {
-                    var tooltip = condition ? "" : $"{Language.ReturnOverlayTooltipRepairNeeded}\n";
-                    tooltip += $"{Language.TermsRank} {sub.Rank}    ({sub.Build.FullIdentifier()})\n";
-
-                    var predictedExp = sub.PredictExpGrowth();
-                    tooltip += $"{Language.TermsRoute}: {route}\n";
-                    tooltip += $"{Language.TermsEXPAfter}: {predictedExp.Rank} ({predictedExp.Exp:##0.00}%)\n";
-                    tooltip += $"{Language.TermsRepair}: {Language.MainWindowTooltipRepair.Format(sub.Build.RepairCosts, sub.CalculateUntilRepair())}";
-
-                    Helper.Tooltip(tooltip);
-                }
-            }
+            ShowFCInfo(allFCs[id], id, indentWidth, secondRowWidth, thirdRowWidth);
 
             ImGuiHelpers.ScaledDummy(5.0f);
+        }
+    }
+
+    private void ShowFCInfo(FreeCompany fc, ulong id, float indentWidth, float secondRowWidth, float thirdRowWidth)
+    {
+        ImGui.TableNextColumn();
+        Helper.TextColored(ImGuiColors.DalamudViolet, $"{Plugin.NameConverter.GetName(fc)}:");
+
+        foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(id).WithIndex())
+        {
+            using var indent = ImRaii.PushIndent(10.0f);
+            var begin = ImGui.GetCursorScreenPos();
+
+            Helper.TextColored(ImGuiColors.HealerGreen, $"{idx + 1}. ");
+            ImGui.SameLine();
+
+            var condition = sub.PredictDurability() > 0;
+            var color = condition ? ImGuiColors.TankBlue : ImGuiColors.DalamudYellow;
+            Helper.TextColored(color, $"{Language.TermsRank} {sub.Rank}");
+            ImGui.SameLine(indentWidth + secondRowWidth);
+            Helper.TextColored(color, $"({sub.Build.FullIdentifier()})");
+
+            ImGui.SameLine(indentWidth + secondRowWidth + thirdRowWidth);
+
+            var route = "";
+            var time = $" {Language.TermsNoVoyage} ";
+            if (sub.IsOnVoyage())
+            {
+                route = Utils.SectorsToPath(" -> ", sub.Points);
+
+                time = $" {Language.TermsDone} ";
+                var returnTime = sub.ReturnTime - DateTime.Now.ToUniversalTime();
+                if (returnTime.TotalSeconds > 0)
+                    time = !Plugin.Configuration.ShowDateInAll ? $" {Utils.ToTime(returnTime)} " : $" {sub.ReturnTime.ToLocalTime()}";
+            }
+
+            var fullText = $"[ {time}{(Plugin.Configuration.ShowRouteInAll ? $"   {route}" : "")} ]";
+            Helper.TextColored(ImGuiColors.ParsedOrange, fullText);
+
+            var textSize = ImGui.CalcTextSize(fullText);
+            var end = new Vector2(begin.X + textSize.X + indentWidth + secondRowWidth + thirdRowWidth, begin.Y + textSize.Y + ImGui.GetStyle().ItemSpacing.Y);
+            if (ImGui.IsMouseHoveringRect(begin, end))
+            {
+                var tooltip = condition ? "" : $"{Language.ReturnOverlayTooltipRepairNeeded}\n";
+                tooltip += $"{Language.TermsRank} {sub.Rank}    ({sub.Build.FullIdentifier()})\n";
+
+                var predictedExp = sub.PredictExpGrowth();
+                tooltip += $"{Language.TermsRoute}: {route}\n";
+                tooltip += $"{Language.TermsEXPAfter}: {predictedExp.Rank} ({predictedExp.Exp:##0.00}%)\n";
+                tooltip += $"{Language.TermsRepair}: {Language.MainWindowTooltipRepair.Format(sub.Build.RepairCosts, sub.CalculateUntilRepair())}";
+
+                Helper.Tooltip(tooltip);
+            }
         }
     }
 }
