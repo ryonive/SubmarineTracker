@@ -327,9 +327,10 @@ public class Plugin : IDalamudPlugin
         var fc = new FreeCompany
         {
             FreeCompanyId = fcId,
+            ContentId = PlayerState.ContentId,
             Tag = local.CompanyTag.TextValue,
             CharacterName = local.Name.TextValue,
-            World = local.HomeWorld.Value.Name.ExtractText(),
+            World = local.HomeWorld.Value.Name.ToString(),
         };
 
         foreach (var submarineExploration in Sheets.ExplorationSheet)

@@ -39,7 +39,7 @@ public partial class HelpyWindow
             foreach (var item in ItemExtensions.ImportantItems)
             {
                 var itemRow = item.GetItem();
-                var ok = Storage.TryGetStorageCount((uint)Items.Tanks, key, out var storageCount);
+                var ok = Storage.TryGetStorageCount((uint)Items.Tanks, fc, out var storageCount);
 
                 ImGui.TableNextColumn();
                 Helper.DrawScaledIcon(itemRow.Icon, IconSize);

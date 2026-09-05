@@ -86,9 +86,14 @@ public class Database : IDisposable
                 migrationsToDo.Add(Migrate0);
                 migrationsToDo.Add(Migrate1);
                 migrationsToDo.Add(Migrate2);
+                migrationsToDo.Add(Migrate3);
                 break;
             case 1:
                 migrationsToDo.Add(Migrate2);
+                migrationsToDo.Add(Migrate3);
+                break;
+            case 2:
+                migrationsToDo.Add(Migrate3);
                 break;
         }
 
@@ -224,6 +229,15 @@ public class Database : IDisposable
                    """);
 
         SetMigrationVersion(2);
+    }
+
+    private void Migrate3()
+    {
+        Connection.Execute("""
+                   ALTER TABLE freecompany ADD COLUMN ContentId BLOB NOT NULL DEFAULT X'00';
+                   """);
+
+        SetMigrationVersion(3);
     }
 
     private void SetMigrationVersion(int version)
@@ -412,6 +426,7 @@ public class Database : IDisposable
                           INSERT INTO freecompany (
                               FreeCompanyId,
                               FreeCompanyTag,
+                              ContentId,
                               World,
                               CharacterName,
                               UnlockedSectors,
@@ -419,6 +434,7 @@ public class Database : IDisposable
                           ) VALUES (
                               $FreeCompanyId,
                               $FreeCompanyTag,
+                              $ContentId,
                               $World,
                               $CharacterName,
                               $UnlockedSectors,
@@ -427,6 +443,7 @@ public class Database : IDisposable
                           ON CONFLICT (FreeCompanyId) DO UPDATE SET
                               FreeCompanyId = excluded.FreeCompanyId,
                               FreeCompanyTag = excluded.FreeCompanyTag,
+                              ContentId = excluded.ContentId,
                               World = excluded.World,
                               CharacterName = excluded.CharacterName,
                               UnlockedSectors = excluded.UnlockedSectors,
@@ -435,6 +452,7 @@ public class Database : IDisposable
 
         cmd.Parameters.AddWithValue("$FreeCompanyId", MessagePackSerializer.Serialize(fc.FreeCompanyId));
         cmd.Parameters.AddWithValue("$FreeCompanyTag", fc.Tag);
+        cmd.Parameters.AddWithValue("$ContentId", MessagePackSerializer.Serialize(fc.ContentId));
         cmd.Parameters.AddWithValue("$World", fc.World);
         cmd.Parameters.AddWithValue("$CharacterName", fc.CharacterName);
         cmd.Parameters.AddWithValue("$UnlockedSectors", MessagePackSerializer.Serialize(fc.UnlockedSectors));
@@ -658,7 +676,8 @@ internal class FCReader(DbDataReader reader) : IEnumerable<FreeCompany>
                     CharacterName = reader.GetString(3),
 
                     UnlockedSectors = MessagePackSerializer.Deserialize<Dictionary<uint, bool>>(reader.GetFieldValue<byte[]>(4)),
-                    ExploredSectors = MessagePackSerializer.Deserialize<Dictionary<uint, bool>>(reader.GetFieldValue<byte[]>(5))
+                    ExploredSectors = MessagePackSerializer.Deserialize<Dictionary<uint, bool>>(reader.GetFieldValue<byte[]>(5)),
+                    ContentId = MessagePackSerializer.Deserialize<ulong>(reader.GetFieldValue<byte[]>(6)),
                 };
             }
             catch (Exception ex)

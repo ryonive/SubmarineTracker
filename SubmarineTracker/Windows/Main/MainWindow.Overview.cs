@@ -7,11 +7,11 @@ public partial class MainWindow
 {
     private void Overview()
     {
-        var selectedFc = Plugin.DatabaseCache.GetFreeCompanies()[CurrentSelection];
         using var tabBar = ImRaii.TabBar("##fcSubmarineDetail");
         if (!tabBar.Success)
             return;
 
+        Plugin.DatabaseCache.TryGetFC(CurrentSelection, out var selectedFC);
         using (var mainTab = ImRaii.TabItem($"{Language.MainWindowTabOverview}##Overview"))
         {
             if (mainTab.Success)
@@ -22,8 +22,8 @@ public partial class MainWindow
 
                 ImGuiHelpers.ScaledDummy(5.0f);
 
-                var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, CurrentSelection, out var tankCount);
-                var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, CurrentSelection, out var kitCount);
+                var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, selectedFC, out var tankCount);
+                var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, selectedFC, out var kitCount);
 
                 Helper.TextColored(ImGuiColors.HealerGreen, Language.MainWindowEntryResources);
                 ImGui.SameLine();
@@ -31,7 +31,7 @@ public partial class MainWindow
 
                 ImGuiHelpers.ScaledDummy(5.0f);
 
-                foreach (var sub in Plugin.DatabaseCache.GetSubmarines(selectedFc.FreeCompanyId))
+                foreach (var sub in Plugin.DatabaseCache.GetSubmarines(selectedFC.FreeCompanyId))
                 {
                     Helper.TextColored(ImGuiColors.HealerGreen, Plugin.NameConverter.GetJustSub(sub));
                     Helper.TextColored(ImGuiColors.TankBlue, $"{Language.TermsRank} {sub.Rank}");
@@ -82,7 +82,7 @@ public partial class MainWindow
             }
         }
 
-        foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(selectedFc.FreeCompanyId).WithIndex())
+        foreach (var (sub, idx) in Plugin.DatabaseCache.GetSubmarines(selectedFC.FreeCompanyId).WithIndex())
         {
             using var subTab = ImRaii.TabItem($"{Plugin.NameConverter.GetJustSub(sub)}##{idx}");
             if (subTab.Success)
@@ -99,7 +99,7 @@ public partial class MainWindow
         if (!lootChild.Success)
             return;
 
-        var fcLoot = Plugin.DatabaseCache.GetFCAllLoot(selectedFc.FreeCompanyId);
+        var fcLoot = Plugin.DatabaseCache.GetFCAllLoot(selectedFC.FreeCompanyId);
         if (fcLoot.Count == 0)
         {
             Helper.NoData();

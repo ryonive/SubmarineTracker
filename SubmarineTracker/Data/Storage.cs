@@ -15,17 +15,17 @@ public static class Storage
         return Plugin.DatabaseCache.HasStorage();
     }
 
-    public static bool TryGetStorageCount(uint item, ulong fcId, out uint storageCount)
+    public static bool TryGetStorageCount(uint item, FreeCompany fc, out uint storageCount)
     {
         storageCount = 0;
 
         if (Plugin.AllaganToolsConsumer.IsAvailable)
         {
-            storageCount = Plugin.AllaganToolsConsumer.GetCount(item, fcId);
+            storageCount = Plugin.AllaganToolsConsumer.GetCount(item, fc.ContentId);
             return storageCount != 0 && storageCount != uint.MaxValue;
         }
 
-        if (!Plugin.DatabaseCache.TryGetStorage(fcId, out var storageData))
+        if (!Plugin.DatabaseCache.TryGetStorage(fc.FreeCompanyId, out var storageData))
             return false;
 
         return storageData.Items.TryGetValue(item, out storageCount);

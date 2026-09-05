@@ -80,8 +80,8 @@ public partial class MainWindow
         {
             using var indent = ImRaii.PushIndent(10.0f);
 
-            var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, fc.FreeCompanyId, out var tankCount);
-            var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, fc.FreeCompanyId, out var kitCount);
+            var hasTanks = Storage.TryGetStorageCount((uint)Items.Tanks, fc, out var tankCount);
+            var hasKits = Storage.TryGetStorageCount((uint)Items.Kits, fc, out var kitCount);
 
             var leftover = Storage.CheckLeftoversFromStorage(subs, tankCount, kitCount);
             if (leftover.Voyages == -1 || leftover.Repairs == -1)

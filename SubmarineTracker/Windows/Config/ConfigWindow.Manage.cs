@@ -46,7 +46,7 @@ public partial class ConfigWindow
         {
             if (ImGuiComponents.IconButton(FontAwesomeIcon.Trash))
             {
-                Plugin.Configuration.CustomLootProfiles.Remove(combo[CurrentAccountId]);
+                Plugin.Configuration.AccountFCs.Remove(combo[CurrentAccountId]);
                 CurrentAccountId = 0;
             }
         }

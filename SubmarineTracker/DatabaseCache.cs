@@ -106,7 +106,7 @@ public class DatabaseCache : IDisposable
         CheckFreeCompany();
 
         var ok = FreeCompanies.TryGetValue(id, out var returnedFC);
-        fc = returnedFC ?? new FreeCompany();
+        fc = returnedFC ?? FreeCompany.CreateFakeFC();
 
         return ok;
     }
@@ -295,6 +295,7 @@ public record FreeCompany
 {
     public ulong FreeCompanyId;
     public string Tag = "";
+    public ulong ContentId;
     public string World = "";
     public string CharacterName = "";
 
@@ -306,6 +307,7 @@ public record FreeCompany
         var fake = new FreeCompany
         {
             FreeCompanyId = 0,
+            ContentId = 0,
             Tag = "Fake",
             CharacterName = "Fake",
             World = "Fake",

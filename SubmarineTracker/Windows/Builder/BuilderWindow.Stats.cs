@@ -31,7 +31,10 @@ public partial class BuilderWindow
             repairAfter = CurrentBuild.CalculateUntilRepair();
         }
 
-        Storage.TryGetStorageCount((uint)Items.Tanks, Plugin.GetFCId, out var tanks);
+        if (!Plugin.DatabaseCache.TryGetFC(Plugin.GetFCId, out var fc))
+            fc = FreeCompany.CreateFakeFC();
+
+        Storage.TryGetStorageCount((uint)Items.Tanks, fc, out var tanks);
         using (var table = ImRaii.Table("##buildColumn", 2, ImGuiTableFlags.SizingFixedFit))
         {
             if (table.Success)
